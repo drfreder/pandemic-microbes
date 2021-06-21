@@ -1,0 +1,318 @@
+---
+title: "The COVID-19 pandemic and microbial science"
+author: "Megan Frederickson and Aspen Reese"
+date: "21/06/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## How has the COVID-19 pandemic affected preprints and grants on microbes, microbiomes, and coronaviruses specifically?
+
+We used these packages:
+
+```{r Load packages, message=FALSE, warning=FALSE}
+#Load packages
+library(tidyverse) 
+library(lubridate)
+library(knitr)
+library(cowplot)
+#install.packages("devtools") 
+#devtools::install_github("nicholasmfraser/rbiorxiv") 
+library(rbiorxiv) 
+library(medrxivr)
+library(anytime)
+library(car)
+library(lme4)
+#library(rcrossref)
+```
+
+# bioRxiv preprints
+
+We scraped submission data from bioRxiv, the main preprint server for biology, for Jan. 1, 2018-Jun. 15, 2021. We used the rbiorxiv package, see:
+
+Fraser, N (2020). rbiorxiv. R package, https://github.com/nicholasmfraser/rbiorxiv
+
+This code takes a while to run, so it does not run when rendering this markdown document (but is reproduced here for transparency).
+
+```{r Scrape biorxiv, message=FALSE, warning=FALSE, eval=FALSE}
+#Not run
+#Get all submissions between Jan 1, 2021 and Jun 15, 2021
+df.2021 <- biorxiv_content(from = "2021-01-01", to = "2021-06-15", limit = "*", format = "df")
+write.csv(df.2021, "Data/biorxiv_2021_data.csv")
+
+#Get all submissions between Jan 1, 2020 and December 31, 2020
+df.2020.1 <- biorxiv_content(from = "2020-01-01", to = "2020-04-30", limit = "*", format = "df")
+df.2020.2 <- biorxiv_content(from = "2020-05-01", to = "2020-08-31", limit = "*", format = "df")
+df.2020.3 <- biorxiv_content(from = "2020-09-01", to = "2020-10-31", limit = "*", format = "df")
+df.2020.4 <- biorxiv_content(from = "2020-11-01", to = "2020-11-30", limit = "*", format = "df")
+df.2020.5 <- biorxiv_content(from = "2020-12-01", to = "2020-12-15", limit = "*", format = "df")
+df.2020.6 <- biorxiv_content(from = "2020-12-16", to = "2020-12-31", limit = "*", format = "df")
+df.2020 <- rbind(df.2020.1, df.2020.2, df.2020.3, df.2020.4, df.2020.5, df.2020.6)
+write.csv(df.2020, "Data/biorxiv_2020_data.csv")
+
+#Get all submissions between Jan 1, 2019 and December 31, 2019
+df.2019.1 <- biorxiv_content(from = "2019-01-01", to = "2019-04-30", limit = "*", format = "df")
+df.2019.2 <- biorxiv_content(from = "2019-05-01", to = "2019-08-31", limit = "*", format = "df")
+df.2019.3 <- biorxiv_content(from = "2019-09-01", to = "2019-12-31", limit = "*", format = "df")
+df.2019 <- rbind(df.2019.1, df.2019.2, df.2019.3)
+write.csv(df.2019, "Data/biorxiv_2019_data.csv")
+
+#Get all submissions between Jan 1, 2018 and December 31, 2018
+df.2018.1 <- biorxiv_content(from = "2018-01-01", to = "2018-04-30", limit = "*", format = "df")
+df.2018.2 <- biorxiv_content(from = "2018-05-01", to = "2018-08-31", limit = "*", format = "df")
+df.2018.3 <- biorxiv_content(from = "2018-09-01", to = "2018-12-31", limit = "*", format = "df")
+df.2018 <- rbind(df.2018.1, df.2018.2, df.2018.3)
+write.csv(df.2018, "Data/biorxiv_2018_data.csv")
+```
+
+How many bioRxiv preprints are about SARS-CoV-2, COVID-19, or other coronaviruses, versus microbiomes or other microbes? 
+
+```{r bioRxiv preprints about COVID-19}
+#Compile dataset
+df.2018 <- read.csv("Data/biorxiv_2018_data.csv")
+df.2019 <- read.csv("Data/biorxiv_2019_data.csv")
+df.2020 <- read.csv("Data/biorxiv_2020_data.csv")
+df.2021 <- read.csv("Data/biorxiv_2021_data.csv")
+df.full <- rbind(df.2018, df.2019, df.2020, df.2021[,-12])
+
+#Abstracts
+df.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus', df.full$abstract, ignore.case=TRUE)
+df.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.full$abstract, ignore.case=TRUE)
+df.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.full$abstract, ignore.case=TRUE)
+
+#Titles
+df.full$COVID.in.title <- grepl('SARS-CoV-2|COVID|coronavirus', df.full$title, ignore.case=TRUE)
+df.full$microbiome.in.title <- grepl('microbiome|microbial community|microbial communities', df.full$title, ignore.case=TRUE)
+df.full$microbe.in.title <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.full$title, ignore.case=TRUE)
+```
+
+There are `r length(df.full$COVID.in.abstract)` bioRxiv preprints in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.full$COVID.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.full$microbe.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`, and `r sum(df.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.full$microbiome.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`
+
+
+
+Make a figure of COVID-19 versus microbiome bioRxiv preprints (from abstracts).
+
+```{r bioRxiv figure}
+df.full$week <- week(df.full$date)
+df.full$week2 <- cut(as.POSIXct(df.full$date), "week")
+df.full$year <- year(df.full$date)
+df.full$month <- month(df.full$date, label=TRUE, abbr = TRUE)
+df.full$month2 <- cut(as.POSIXct(df.full$date), "month")
+
+sum.by.week <- df.full %>% group_by(week2) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
+
+sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
+
+#Total preprints through time
+
+p1 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints", subtitle="All preprints")
+p1
+
+save_plot("bioRxiv preprints 2018 to early 2021.pdf", p1, base_width=4, dpi=300)
+
+#Microbiome versus other microbe versus COVID-19 preprints through time
+lm1 <- lm(n.microbiome.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+lm2 <- lm(n.other.microbe.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+
+unique(sum.by.week.long$type)
+
+p2 <- ggplot(data=subset(sum.by.week.long, type == "n.covid.preprints" | type == "n.microbiome.preprints" | type == "n.other.microbe.preprints"))+geom_line(aes(x=week2, y=number, color=type))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints")+geom_abline(intercept=lm1$coefficients[1], slope=lm1$coefficients[2], color="green", linetype="dashed")+geom_abline(intercept=lm2$coefficients[1], slope=lm2$coefficients[2], color="blue", linetype="dashed")+scale_color_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))
+p2
+
+save_plot("bioRxiv COVID vs. microbiome preprints.pdf", p2, base_width=8, dpi=300)
+
+p3 <- ggplot(data=subset(sum.by.week.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=week2)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints")
+p3
+
+save_plot("bioRxiv COVID vs. microbiome preprints_alternate.pdf", p3, base_width=8, dpi=300)
+```
+
+Make figures of COVID-19 versus microbiome bioRxiv preprints (from titles).
+
+```{r}
+sum.by.week <- df.full %>% group_by(week2) %>% summarize(n.covid.preprints = sum(COVID.in.title, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.title, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.title, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
+
+sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
+
+#Microbiome versus other microbe versus COVID-19 preprints through time
+lm1 <- lm(n.microbiome.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+lm2 <- lm(n.other.microbe.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+
+p4 <- ggplot(data=subset(sum.by.week.long, type == "n.covid.preprints" | type == "n.microbiome.preprints" | type == "n.other.microbe.preprints"))+geom_line(aes(x=week2, y=number, color=type))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints", subtitle="Titles only")+geom_abline(intercept=lm1$coefficients[1], slope=lm1$coefficients[2], color="green", linetype="dashed")+geom_abline(intercept=lm2$coefficients[1], slope=lm2$coefficients[2], color="blue", linetype="dashed")+scale_color_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))
+p4
+
+p5 <- ggplot(data=subset(sum.by.week.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=week2)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints", subtitle="Titles only")
+p5
+```
+
+Subset by sub-discipline with bioRxiv
+
+```{r bioRxiv figure}
+#Check which categories have a lot of covid preprints
+sum.by.category <- df.full %>% group_by(category) %>% summarize(n=n(), n.covid = sum(COVID.in.abstract, na.rm=TRUE))
+unique(subset(sum.by.category, n.covid >= 25)$category) #Categories with at least 25 COVID preprints
+
+sum.by.week <- df.full[df.full$category %in% unique(subset(sum.by.category, n.covid >= 25)$category), ] %>% group_by(week2, category) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
+
+sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
+unique(sum.by.week.long$category)
+sum.by.week.long$category <- gsub("scientific communication and education", "scientific communication\nand education", sum.by.week.long$category)
+sum.by.week.long$category <- gsub("pharmacology and toxicology", "pharmacology and\ntoxicology", sum.by.week.long$category)
+
+#Total preprints through time
+
+p6 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints", subtitle="All preprints in categories with 25+ COVID-19 preprints")+facet_wrap(~category, scales="free")+theme_bw()+theme(legend.position = "top", panel.grid = element_blank())
+p6
+
+save_plot("bioRxiv preprints 2018 to early 2021 by category.pdf", p6, base_width=8, base_height=10, dpi=300)
+
+#Microbiome versus other microbe versus COVID-19 preprints through time, by category
+
+p7 <- ggplot(data=subset(sum.by.week.long, type == "n.covid.preprints" | type == "n.microbiome.preprints" | type == "n.other.microbe.preprints"))+geom_line(aes(x=week2, y=number, color=type))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints")+scale_color_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))+facet_wrap(~category, scales='free')+theme_bw()+theme(legend.position = "top", panel.grid = element_blank())
+p7
+
+save_plot("bioRxiv COVID vs. microbiome preprints by category.pdf", p7, base_width=8, base_height=10, dpi=300)
+
+p8 <- ggplot(data=subset(sum.by.week.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=week2)) + geom_bar(position="stack", stat="identity")+scale_fill_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv prepints")+facet_wrap(~category, scales='free')+theme_bw()+theme(legend.position = "top", panel.grid = element_blank(), strip.text = element_text(size=7))
+p8
+
+save_plot("bioRxiv COVID vs. microbiome preprints by category_alternate.pdf", p8, base_width=8, base_height=10, dpi=300)
+```
+
+# medRxiv preprints
+
+We also scraped submission data from medRxiv.
+
+```{r Scrape biorxiv, message=FALSE, warning=FALSE, eval=FALSE}
+#Not run
+df.med.2019 <- mx_api_content(from_date = "2019-01-01", to_date = "2019-12-31")
+df.med.2020 <- mx_api_content(from_date = "2020-01-01", to_date = "2020-12-31") #Wow there has been HUGE growth in medRxiv
+df.med.2021 <- mx_api_content(from_date = "2021-01-01", to_date = "2021-03-15")
+write.csv(df.med.2019, "Data/medrxiv_2019_data.csv")
+write.csv(df.med.2020, "Data/medrxiv_2020_data.csv")
+write.csv(df.med.2021, "Data/medrxiv_2021_data.csv")
+```
+
+Let's check how many bioRxiv preprints are about COVID-19 versus microbiomes. 
+
+```{r medRxiv preprints about COVID-19}
+df.med.2019 <- read.csv("Data/medrxiv_2019_data.csv")
+df.med.2020 <- read.csv("Data/medrxiv_2020_data.csv")
+df.med.2021 <- read.csv("Data/medrxiv_2021_data.csv")
+df.med.full <- rbind(df.med.2019, df.med.2020, df.med.2021)
+
+df.med.full$COVID.in.abstract <- grepl('COVID-19|SARS-CoV-2|COVID|Covid|coronavirus|Coronavirus', df.med.full$abstract)
+df.med.full$microbiome.in.abstract <- grepl('microbiome|Microbiome|microbial community|Microbial community', df.med.full$abstract)
+df.med.full$microbe.in.abstract <- grepl('microbe|Microbe|bacteria|bacterium|Bacteria|Bacterium|virus|Virus|archaea|COVID-19|SARS-CoV-2|COVID|Covid|coronavirus|Coronavirus|microbiome|Microbiome|microbial community|Microbial community|fungus|fungi|Archaea|Fungi|Fungus', df.med.full$abstract)
+
+sum(df.med.full$COVID.in.abstract)
+sum(df.med.full$microbiome.in.abstract)
+sum(df.med.full$microbiome.in.abstract & df.med.full$COVID.in.abstract)
+```
+
+
+```{r medRxiv figure}
+df.med.full$week <- week(df.med.full$date)
+df.med.full$week2 <- cut(as.POSIXct(df.med.full$date), "week")
+df.med.full$year <- year(df.med.full$date)
+df.med.full$month <- month(df.med.full$date, label=TRUE, abbr = TRUE)
+df.med.full$month2 <- cut(as.POSIXct(df.med.full$date), "month")
+
+sum.by.week <- df.med.full %>% group_by(week2) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
+
+sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
+
+#Total preprints through time
+
+p9 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv prepints", subtitle="All preprints")
+p9
+
+save_plot("medRxiv preprints 2018 to early 2021.pdf", p9, base_width=4, dpi=300)
+
+#Microbiome versus other microbe versus COVID-19 preprints through time
+lm1 <- lm(n.microbiome.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+lm2 <- lm(n.other.microbe.preprints~week2, data=subset(sum.by.week, week2 <= "2019-12-31"))
+
+p10 <- ggplot(data=subset(sum.by.week.long, type == "n.covid.preprints" | type == "n.microbiome.preprints" | type == "n.other.microbe.preprints"))+geom_line(aes(x=week2, y=number, color=type))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv prepints")+geom_abline(intercept=lm1$coefficients[1], slope=lm1$coefficients[2], color="green", linetype="dashed")+geom_abline(intercept=lm2$coefficients[1], slope=lm2$coefficients[2], color="blue", linetype="dashed")+scale_color_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))
+p10
+
+save_plot("medRxiv COVID vs. microbiome preprints.pdf", p10, base_width=8, dpi=300)
+
+p11 <- ggplot(data=subset(sum.by.week.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=week2)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_discrete(name = "Preprint type", labels = c("COVID-19 or SARS-CoV-2", "Microbiome", "Other microbe"))+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv prepints")
+p11
+
+save_plot("medRxiv COVID vs. microbiome preprints_alternate.pdf", p11, base_width=8, dpi=300)
+
+```
+
+
+```{r}
+library("rgbif")
+library("spocc")
+#remotes::install_github(c("ropensci/namext"))
+#remotes::install_github("sckott/spplit")
+library("namext")
+library("spplit")
+
+#https://www.biorxiv.org/content/10.1101/2020.05.25.110734v3
+
+x <- "test.pdf"
+out <- name_extract(x)
+df.names <-as.data.frame(out$names)
+
+```
+
+# Grants
+
+## NIH
+From Aspen: 
+The NIH data are for strict fiscal years so I tried to recreate that time frame for NSF but I’m not actually sure if they fall on the same calendar (October 1-September 30). 
+
+```{r nih}
+df.nih.covid <- read_csv("NIH/NIH_FY181920_covid_all_noheader.csv")
+df.nih.2021.covid <- read_csv("NIH/NIH_FY21_covid_all_noheader.csv")
+df.nih.2021.covid$`Project End Date` <- NA
+df.nih.microbiome <- read_csv("NIH/NIH_FY181920_microb_all_noheader.csv")
+df.nih.2021.microbiome <- read_csv("NIH/NIH_FY21_microb_all_noheader.csv")
+
+df.nih.covid$type <- "COVID-19"
+df.nih.2021.covid$type <- "COVID-19"
+df.nih.microbiome$type <- "Microbiome"
+df.nih.2021.microbiome$type <- "Microbiome"
+
+df.nih <- rbind(df.nih.covid, df.nih.microbiome, df.nih.2021.microbiome, df.nih.2021.covid)
+df.nih$`Budget Start Date` <- as.Date(df.nih$`Budget Start Date`, format="%d-%b-%y")
+df.nih$week <- cut(as.POSIXct(df.nih$`Budget Start Date`), "week")
+df.nih$month <- cut(as.POSIXct(df.nih$`Budget Start Date`), "month")
+
+kable(df.nih %>% group_by(`Funding Mechanism`) %>% summarize(number = n()))
+
+sum.by.month <- df.nih %>% group_by(month, type) %>% summarize(n=n())
+sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
+
+p12 <- ggplot(data=subset(sum.by.month, !is.na(month) & month >= "2018-01-01" & month <= "2021-02-01"), aes(x=month, y=n, fill=type))+ geom_bar(position="stack", stat="identity")+theme_cowplot()+ylab("Awards (no./month)")+xlab("Date")+ggtitle("NIH", subtitle="All programs")+labs(fill="Grant type")
+p12
+
+save_plot("NIH COVID vs. microbiome grants, all programs.pdf", p12, base_width=8, dpi=300)
+
+#Just RO1s
+
+sum.by.month <- df.nih[df.nih$`Funding Mechanism` == "Research Projects",] %>% group_by(month, type) %>% summarize(n=n())
+sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
+
+p13 <- ggplot(data=subset(sum.by.month, !is.na(month) & month >= "2018-01-01" & month <= "2021-02-01"), aes(x=month, y=n, fill=type))+ geom_bar(position="stack", stat="identity")+theme_cowplot()+ylab("Awards (no./month)")+xlab("Date")+ggtitle("NIH", subtitle="Research Projects")+labs(fill="Grant type")
+p13 
+
+save_plot("NIH COVID vs. microbiome grants, Research Projects only.pdf", p13, base_width=8, dpi=300)
+
+```
+
