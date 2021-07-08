@@ -155,11 +155,12 @@ sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
 sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incomplete) month
 
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
-#unique(sum.by.month.long$category)
+missing.fields <- sum.by.category[which(!sum.by.category$category %in% sum.by.month.long$category), "category"] 
+#Fields not in figure
 sum.by.month.long$category <- gsub("scientific communication and education", "scientific communication\nand education", sum.by.month.long$category)
 sum.by.month.long$category <- gsub("pharmacology and toxicology", "pharmacology and\ntoxicology", sum.by.month.long$category)
 
-p3 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+facet_wrap(~category, scales='free')+theme_bw()+theme(legend.position = "top", panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=7))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p3 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+facet_wrap(~category, scales = 'free')+theme_cowplot()+theme(legend.position = c(0.419, 0.16), panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=7.5), axis.text=element_text(size=8.5))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p3
 ```
 
@@ -168,10 +169,45 @@ p3
 ![](README_files/figure-gfm/bioRxiv%20sub-discipline%20figure-1.png)<!-- -->
 
 ``` r
-save_plot("figureS1.pdf", p3, base_width=8, base_height=8, dpi=300)
+save_plot("figureS1.pdf", p3, base_width=10, base_height=8, dpi=300)
 ```
 
     ## Warning: Removed 51 rows containing missing values (geom_bar).
+
+Summarize the same data, but visualize in a more concise form for the
+main text.
+
+``` r
+sum.by.category.covid <- subset(df.full, COVID.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.covid$type <- "COVID-19, SARS-CoV-2, or coronavirus"
+sum.by.category.covid$percent <- sum.by.category.covid$n/sum(sum.by.category.covid$n)*100
+sum.by.category.microbiome <- subset(df.full, microbiome.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.microbiome$type <- "Microbiome or microbial community"
+sum.by.category.microbiome$percent <- sum.by.category.microbiome$n/sum(sum.by.category.microbiome$n)*100
+sum.by.category.other.microbe <- subset(df.full, !COVID.in.abstract & !microbiome.in.abstract & microbe.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.other.microbe$type <- "Other microbe"
+sum.by.category.other.microbe$percent <- sum.by.category.other.microbe$n/sum(sum.by.category.other.microbe$n)*100
+sum.by.category <- rbind(sum.by.category.covid, sum.by.category.microbiome, sum.by.category.other.microbe)
+sum.by.category$category2 <- ifelse(sum.by.category$percent > 6 | sum.by.category$category == "ecology" | sum.by.category$category == "evolutionary biology", sum.by.category$category, "other")
+unique(sum.by.category$category2)
+```
+
+    ## [1] "other"                "biochemistry"         "bioinformatics"      
+    ## [4] "ecology"              "evolutionary biology" "genomics"            
+    ## [7] "immunology"           "microbiology"
+
+``` r
+sum.by.category$category2 <- ordered(sum.by.category$category2, levels=c("ecology", "evolutionary biology", "biochemistry", "bioinformatics", "biophysics", "genomics", "immunology", "microbiology", "molecular biology", "other"))
+
+p4 <- ggplot(data=sum.by.category, aes(x=type, y=n, fill=category2))+geom_bar(position="fill", stat="identity")+theme_cowplot()+ylab("Preprints (prop.)")+xlab("Topic")+scale_fill_manual(values=c(park_palette("SmokyMountains")[[2]], park_palette("SmokyMountains")[[4]], "#d9d9d9", "#bdbdbd", "#969696", "#737373", "#525252", "#252525"))+theme(legend.title=element_blank())+scale_x_discrete(labels = wrap_format(20))
+p4
+```
+
+![](README_files/figure-gfm/bioRxiv%20sub-discipline%20stacked%20bar%20graph%20figure-1.png)<!-- -->
+
+``` r
+save_plot("figure2.pdf", p4, base_width=8, base_height=6, dpi=300)
+```
 
 # medRxiv preprints
 
@@ -223,8 +259,8 @@ sum.by.week <- subset(sum.by.week, week2 < "2021-06-14") #Remove last (incomplet
 sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
 
 #Total preprints through time
-p4 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
-p4
+p5 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p5
 ```
 
 ![](README_files/figure-gfm/medRxiv%20total%20preprints%20figure-1.png)<!-- -->
@@ -240,8 +276,8 @@ sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incompl
 
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
 
-p5 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("medRxiv preprints")+theme(legend.position = c(0.022, 0.85), legend.title=element_blank(), legend.text=element_text(size=10))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
-p5
+p6 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("medRxiv preprints")+theme(legend.position = c(0.022, 0.85), legend.title=element_blank(), legend.text=element_text(size=10))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p6
 ```
 
 ![](README_files/figure-gfm/medRxiv%20main%20figure-1.png)<!-- -->
@@ -323,8 +359,8 @@ sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incompl
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
 
 #Total grants through time
-p6 <- ggplot(data=subset(sum.by.month.long, type=="n.preprints"))+geom_line(aes(x=month, y=number))+theme_cowplot()+ylab("Grants (no./month)")+xlab("Date")+ggtitle("NIH", subtitle="Research Project Grants")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
-p6
+p7 <- ggplot(data=subset(sum.by.month.long, type=="n.preprints"))+geom_line(aes(x=month, y=number))+theme_cowplot()+ylab("Grants (no./month)")+xlab("Date")+ggtitle("NIH", subtitle="Research Project Grants")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p7
 ```
 
 ![](README_files/figure-gfm/nih%20total%20grants%20figure-1.png)<!-- -->
@@ -333,8 +369,8 @@ How many NIH research project grants are there on COVID-19, SARS-CoV-2,
 or coronaviruses, compared to other microbial science topics?
 
 ``` r
-p7 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Grants (no.)")+xlab("Month")+ggtitle("NIH grants")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
-p7
+p8 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Grants (no.)")+xlab("Month")+ggtitle("NIH grants")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p8
 ```
 
 ![](README_files/figure-gfm/NIH%20grant%20number%20figure-1.png)<!-- -->
@@ -359,8 +395,8 @@ sum.by.month.dollars.other$type <- "Other"
 
 dollars.by.month <- rbind(sum.by.month.dollars[, -2], sum.by.month.dollars.microbiome[, -2], sum.by.month.dollars.other[,-2])
 
-p8 <- ggplot(data=dollars.by.month, aes(fill=type, y=dollars, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Amount (US$)")+xlab("Month")+ggtitle("NIH grants")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
-p8
+p9 <- ggplot(data=dollars.by.month, aes(fill=type, y=dollars, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Amount (US$)")+xlab("Month")+ggtitle("NIH grants")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p9
 ```
 
 ![](README_files/figure-gfm/NIH%20grant%20dollars%20figure-1.png)<!-- -->
@@ -368,14 +404,14 @@ p8
 Put the bioRxiv, medRxiv, and NIH results together in a single figure.
 
 ``` r
-p9 <- plot_grid(p2, p5, p8, nrow=3, align='v')
-p9
+p10 <- plot_grid(p2, p6, p9, nrow=3, align='v')
+p10
 ```
 
 ![](README_files/figure-gfm/Omnibus%20figure-1.png)<!-- -->
 
 ``` r
-save_plot("figure1.pdf", p9, base_width=6, base_height=8, dpi=300)
+save_plot("figure1.pdf", p10, base_width=6, base_height=8, dpi=300)
 ```
 
 The NIH dataset does not have the same sub-disciplinary categories as
@@ -453,8 +489,8 @@ sum.by.month.long$category <- gsub("pharmacolog.*", "pharmacology", sum.by.month
 sum.by.month.long$category <- gsub("physiolog.*", "physiology", sum.by.month.long$category)
 sum.by.month.long$category <- gsub("toxicolog.*", "toxicology", sum.by.month.long$category)
 
-p10 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints" & category != "plant biology" & category != "animal behavior" & category != "zoology" & category != "developmental biology" & category != "bioengineering"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Grants (no.)")+xlab("Month")+ggtitle("NIH grants")+theme_bw()+theme(legend.position = "top", panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=7))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")+facet_wrap(~category, scales='free')
-p10
+p11 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints" & category != "plant biology" & category != "animal behavior" & category != "zoology" & category != "developmental biology" & category != "bioengineering"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Grants (no.)")+xlab("Month")+ggtitle("NIH grants")+theme_bw()+theme(legend.position = "top", panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=7))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")+facet_wrap(~category, scales='free')
+p11
 ```
 
 ![](README_files/figure-gfm/NIH%20by%20category%20figure-1.png)<!-- -->
