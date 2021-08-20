@@ -1,7 +1,7 @@
 ---
 title: "The COVID-19 pandemic and microbial science"
 author: "Megan Frederickson and Aspen Reese"
-date: "28/06/2021"
+date: "08/20/2021"
 output: github_document
 editor_options: 
   chunk_output_type: console
@@ -168,7 +168,6 @@ sum.by.category.other.microbe$type <- "Other microbe"
 sum.by.category.other.microbe$percent <- sum.by.category.other.microbe$n/sum(sum.by.category.other.microbe$n)*100
 sum.by.category <- rbind(sum.by.category.covid, sum.by.category.microbiome, sum.by.category.other.microbe)
 sum.by.category$category2 <- ifelse(sum.by.category$percent > 6 | sum.by.category$category == "ecology" | sum.by.category$category == "evolutionary biology", sum.by.category$category, "other")
-unique(sum.by.category$category2)
 sum.by.category$category2 <- ordered(sum.by.category$category2, levels=c("ecology", "evolutionary biology", "biochemistry", "bioinformatics", "biophysics", "genomics", "immunology", "microbiology", "molecular biology", "other"))
 
 p4 <- ggplot(data=sum.by.category, aes(x=type, y=n, fill=category2))+geom_bar(position="fill", stat="identity")+theme_cowplot()+ylab("Preprints (prop.)")+xlab("Topic")+scale_fill_manual(values=c(park_palette("SmokyMountains")[[2]], park_palette("SmokyMountains")[[4]], "#d9d9d9", "#bdbdbd", "#969696", "#737373", "#525252", "#252525"))+theme(legend.title=element_blank())+scale_x_discrete(labels = wrap_format(20))
@@ -253,9 +252,9 @@ df.nih.full$microbiome.in.abstract <- grepl('microbiome|microbial community|micr
 df.nih.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.nih.full$`Project Abstract`, ignore.case=TRUE)
 ```
 
-There are `r length(df.nih.full$COVID.in.abstract)` NIH Research Project grants in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.nih.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.nih.full$COVID.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.nih.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.nih.full$microbe.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`, and `r sum(df.nih.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.nih.full$microbiome.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`
+There are `r length(df.nih.full$COVID.in.abstract)` NIH Research Project grants in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.nih.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.nih.full$COVID.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.nih.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.nih.full$microbe.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`, and `r sum(df.nih.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.nih.full$microbiome.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`.
 
-The NIH dataset has a field for NIH COVID-19 Response, which according to the website "returns projects awarded to study COVID-19 and related topics, as funder under: RegCV - NIH regular appropriations funding, CV - Coronavirus Preparedness and Response Supplemental Appropriations Act, 2020, C3 - CARES Act (Coronavirus Aid, Relief, and Economic Security Act), C4 - Paycheck Protection Program and Health Care Enhancement Act, C5 - Coronavirus Response and Relief Supplemental Appropriations Act, 2021." We checked the correspondence between the COVID-19 search terms we used and the NIH COVID-19 Response field. 
+The NIH dataset has a field for NIH COVID-19 Response, which according to the website "returns projects awarded to study COVID-19 and related topics, as funder under: RegCV NIH regular appropriations funding, CV Coronavirus Preparedness and Response Supplemental Appropriations Act, 2020, C3 CARES Act (Coronavirus Aid, Relief, and Economic Security Act), C4 Paycheck Protection Program and Health Care Enhancement Act, C5 Coronavirus Response and Relief Supplemental Appropriations Act, 2021." We checked the correspondence between the COVID-19 search terms we used and the NIH COVID-19 Response field. 
 
 ```{r NIH COVID-19 response, warning=FALSE, message=FALSE}
 #Adjust date fields
@@ -276,7 +275,7 @@ The earliest date of a grant through the NIH COVID-19 response is `r min(df.nih.
 
 How many total research project grants have been awarded by NIH over this time period? 
 
-```{r nih total grants figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
+```{r NIH total grants figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 #By month
 sum.by.month <- df.nih.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
 sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
