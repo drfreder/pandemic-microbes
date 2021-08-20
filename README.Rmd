@@ -97,63 +97,64 @@ There are `r length(df.full$COVID.in.abstract)` bioRxiv preprints in the dataset
 
 How many total preprints have been submitted to bioRxiv through time? 
 
-```{r bioRxiv total preprints figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=4, dpi=300}
+```{r bioRxiv total preprints figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 df.full$week2 <- cut(as.POSIXct(df.full$date), "week") #Bin by week
 df.full$month <- cut(as.POSIXct(df.full$date), "month") #Bin by month
 
 #By week
-sum.by.week <- df.full %>% group_by(week2) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week <- df.full %>% group_by(week2) %>% summarize(n.preprints = n()) #Summarize by week
 sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
 sum.by.week <- subset(sum.by.week, week2 < "2021-06-14") #Remove last (incomplete) week
 
-sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
-
 #Total preprints through time
-p1 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p1 <- ggplot(data=sum.by.week)+geom_line(aes(x=week2, y=n.preprints))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("bioRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2018-01-01"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p1
 ```
 
 How many bioRxiv preprints are there on COVID-19, SARS-CoV-2, or coronaviruses, compared to other microbial science topics? 
 
-```{r bioRxiv main figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=4, dpi=300}
+```{r bioRxiv main figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 #By month
-sum.by.month <- df.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
+sum.by.month <- df.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
+#Note that n.microbe.preprints includes COVID and microbiome preprints, while n.other.microbe.preprints subtracts these out
 sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
 sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incomplete) month
-
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
 
-p2 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+#Make figure
+p2 <- ggplot(data=subset(sum.by.month.long, type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p2
 ```
 
 How do these patterns break down by author-identified sub-discipline in the bioRxiv dataset? 
 
-```{r bioRxiv sub-discipline figure, fig.width=8, fig.height=8, dpi=300}
+```{r bioRxiv sub-discipline figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
 #Check which categories have a lot of covid preprints
-sum.by.category <- df.full %>% group_by(category) %>% summarize(n=n(), n.covid = sum(COVID.in.abstract, na.rm=TRUE))
+sum.by.category <- df.full %>% group_by(category) %>% summarize(n.covid = sum(COVID.in.abstract, na.rm=TRUE))
 
 #By month and category, for categories with at least 25 COVID-19 preprints
-sum.by.month <- df.full[df.full$category %in% unique(subset(sum.by.category, n.covid >= 25)$category), ] %>% group_by(month, category) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
+sum.by.month <- df.full[df.full$category %in% unique(subset(sum.by.category, n.covid >= 25)$category), ] %>% group_by(month, category) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
 sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
 sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incomplete) month
 
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
 missing.fields <- sum.by.category[which(!sum.by.category$category %in% sum.by.month.long$category), "category"] #Fields not in figure
-sum.by.month.long$category <- gsub("scientific communication and education", "scientific communication\nand education", sum.by.month.long$category)
-sum.by.month.long$category <- gsub("pharmacology and toxicology", "pharmacology and\ntoxicology", sum.by.month.long$category)
+sum.by.month.long$category <- gsub("scientific communication and education", "scientific communication\nand education", sum.by.month.long$category) #Put long categories on two lines
+sum.by.month.long$category <- gsub("pharmacology and toxicology", "pharmacology and\ntoxicology", sum.by.month.long$category) #Put long categories on two lines
 
-p3 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+facet_wrap(~category, scales = 'free')+theme_cowplot()+theme(legend.position = c(0.419, 0.16), panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=7.5), axis.text=element_text(size=8.5))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p3 <- ggplot(data=subset(sum.by.month.long, type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+facet_wrap(~category, scales = 'free')+theme_cowplot()+theme(axis.text.x = element_text(angle = 15), legend.position = c(0.419, 0.16), panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=9), axis.text=element_text(size=9))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p3
 
-save_plot("figureS1.pdf", p3, base_width=10, base_height=8, dpi=300)
-save_plot("figureS1.png", p3, base_width=10, base_height=8, dpi=300)
+save_plot("figureS1.tiff", p3, base_width=10, base_height=8, bg = "white", dpi=300)
 ```
 
+This figure excludes sub-disciplines with fewer than 25 preprints on SARS-CoV-2, COVID-19, or coronaviruses, specifically:
 
+`r kable(missing.fields)`
 
+Note that the reason that epidemiology and clinical trials have few COVID-19 papers in the bioRxiv database is that these are overwhelmingly submitted to medRxiv (see below).
 
-Summarize the same data, but visualize in a more concise form for the main text. 
+We also want to visualize the data on sub-fields in a more concise form for the main text. 
 
 ```{r bioRxiv sub-discipline stacked bar graph figure, fig.width=8, fig.height=8, dpi=300}
 sum.by.category.covid <- subset(df.full, COVID.in.abstract) %>% group_by(category) %>% summarize(n=n())
@@ -173,13 +174,12 @@ sum.by.category$category2 <- ordered(sum.by.category$category2, levels=c("ecolog
 p4 <- ggplot(data=sum.by.category, aes(x=type, y=n, fill=category2))+geom_bar(position="fill", stat="identity")+theme_cowplot()+ylab("Preprints (prop.)")+xlab("Topic")+scale_fill_manual(values=c(park_palette("SmokyMountains")[[2]], park_palette("SmokyMountains")[[4]], "#d9d9d9", "#bdbdbd", "#969696", "#737373", "#525252", "#252525"))+theme(legend.title=element_blank())+scale_x_discrete(labels = wrap_format(20))
 p4
 
-save_plot("figure2.pdf", p4, base_width=8, base_height=6, dpi=300)
-save_plot("figure2.png", p4, base_width=8, base_height=6, dpi=300)
+save_plot("figure2.tiff", p4, base_width=8, base_height=6, bg="white", dpi=300)
 ```
 
-# medRxiv preprints
+## medRxiv preprints
 
-We also scraped submission data from medRxiv.
+We also scraped submission data from medRxiv, for the same dates (Jan. 1, 2018-Jun. 15, 2021). Again, this code is not run when rendering this markdown document, but it is reproduced here for transparency.
 
 ```{r Scrape medrxiv, message=FALSE, warning=FALSE, eval=FALSE}
 #Not run
@@ -191,7 +191,7 @@ write.csv(df.med.2020, "Data/medrxiv_2020_data.csv")
 write.csv(df.med.2021, "Data/medrxiv_2021_data.csv")
 ```
 
-How many medRxiv preprints are about SARS-CoV-2, COVID-19, or other coronaviruses, versus microbiomes or other microbes? 
+How many medRxiv preprints are about SARS-CoV-2, COVID-19, or other coronaviruses, versus microbiomes or other microbes? We used the same case-insensitive search terms here as above. 
 
 ```{r medRxiv preprints about COVID-19, message=FALSE, warning=FALSE}
 df.med.2019 <- read.csv("Data/medrxiv_2019_data.csv")
@@ -214,14 +214,12 @@ df.med.full$week2 <- cut(as.POSIXct(df.med.full$date), "week")
 df.med.full$month <- cut(as.POSIXct(df.med.full$date), "month")
 
 #By week
-sum.by.week <- df.med.full %>% group_by(week2) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by week
+sum.by.week <- df.med.full %>% group_by(week2) %>% summarize(n.preprints = n()) #Summarize by week
 sum.by.week$week2 <- as.Date(sum.by.week$week2) #Make weeks dates
 sum.by.week <- subset(sum.by.week, week2 < "2021-06-14") #Remove last (incomplete) week
 
-sum.by.week.long <- gather(sum.by.week, type, number, n.covid.preprints:n.preprints) #Make wide data long
-
 #Total preprints through time
-p5 <- ggplot(data=subset(sum.by.week.long, type=="n.preprints"))+geom_line(aes(x=week2, y=number))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
+p5 <- ggplot(data=sum.by.week)+geom_line(aes(x=week2, y=n.preprints))+theme_cowplot()+ylab("Preprints (no./week)")+xlab("Date")+ggtitle("medRxiv preprints", subtitle="All preprints")+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p5
 ```
 
@@ -229,10 +227,9 @@ How many medRxiv preprints are there on COVID-19, SARS-CoV-2, or coronaviruses, 
 
 ```{r medRxiv main figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
 #By month
-sum.by.month <- df.med.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
+sum.by.month <- df.med.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
 sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
 sum.by.month <- subset(sum.by.month, month < "2021-06-01") #Remove last (incomplete) month
-
 sum.by.month.long <- gather(sum.by.month, type, number, n.covid.preprints:n.preprints) #Make wide data long
 
 p6 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("medRxiv preprints")+theme(legend.position = c(0.022, 0.85), legend.title=element_blank(), legend.text=element_text(size=10))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
@@ -240,7 +237,8 @@ p6
 ```
 
 # NIH Research Project Grants
-We also compiled data on US National Institutes of Health (NIH) research project grants over the same period. 
+
+We also compiled data on US National Institutes of Health (NIH) research project grants over the same period, and searched their abstracts for the same terms as above. 
 
 ```{r NIH, message=FALSE, warning=FALSE}
 nih.2018 <- rbind(read_csv("Data/NIH_2018_part1.csv"), read_csv("Data/NIH_2018_part2.csv"), read_csv("Data/NIH_2018_part1.csv"), read_csv("Data/NIH_2018_part2.csv"), read_csv("Data/NIH_2018_part3.csv"), read_csv("Data/NIH_2018_part4.csv"), read_csv("Data/NIH_2018_part5.csv"), read_csv("Data/NIH_2018_part6.csv"), read_csv("Data/NIH_2018_part7.csv"), read_csv("Data/NIH_2018_part8.csv"), read_csv("Data/NIH_2018_part9.csv"), read_csv("Data/NIH_2018_part10.csv"), read_csv("Data/NIH_2018_part11.csv"))
@@ -278,7 +276,7 @@ The earliest date of a grant through the NIH COVID-19 response is `r min(df.nih.
 
 How many total research project grants have been awarded by NIH over this time period? 
 
-```{r nih total grants figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
+```{r nih total grants figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 #By month
 sum.by.month <- df.nih.full %>% group_by(month) %>% summarize(n.covid.preprints = sum(COVID.in.abstract, na.rm=TRUE), n.microbiome.preprints = sum(microbiome.in.abstract, na.rm=TRUE), n.microbe.preprints = sum(microbe.in.abstract, na.rm=TRUE), n.other.preprints = n() - n.covid.preprints - n.microbiome.preprints, n.other.microbe.preprints = n.microbe.preprints-n.covid.preprints-n.microbiome.preprints, n.preprints = n()) #Summarize by month
 sum.by.month$month <- as.Date(sum.by.month$month) #Make months dates
@@ -292,14 +290,14 @@ p7
 
 How many NIH research project grants are there on COVID-19, SARS-CoV-2, or coronaviruses, compared to other microbial science topics? 
 
-```{r NIH grant number figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
+```{r NIH grant number figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 p8 <- ggplot(data=subset(sum.by.month.long, type != "n.other.preprints" & type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+theme_cowplot()+scale_fill_manual(values=rev(park_palette("Badlands", 3)),  labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Grants (no.)")+xlab("Month")+ggtitle("NIH grants")+theme(legend.position = "none", legend.title=element_blank())+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p8
 ```
 
 How many NIH grant dollars went to COVID-19, SARS-CoV-2, or coronaviruses, compared to other microbial science topics? 
 
-```{r NIH grant dollars figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
+```{r NIH grant dollars figure, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, dpi=300}
 sum.by.month.dollars <- df.nih.full %>% group_by(month, COVID.in.abstract) %>% summarize(dollars = sum(`Total Cost`, na.rm=TRUE)) #Summarize by month
 sum.by.month.dollars$month <- as.Date(sum.by.month.dollars$month) #Make months dates
 sum.by.month.dollars <- subset(sum.by.month.dollars, month < "2021-06-01" & COVID.in.abstract == TRUE) #Remove last (incomplete) month
@@ -325,6 +323,5 @@ Put the bioRxiv, medRxiv, and NIH results together in a single figure.
 ```{r Omnibus figure, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, dpi=300}
 p10 <- plot_grid(p2, p6, p9, nrow=3, align='v')
 p10
-save_plot("figure1.pdf", p10, base_width=6, base_height=8, dpi=300)
-save_plot("figure1.png", p10, base_width=6, base_height=8, dpi=300)
+save_plot("figure1.tiff", p10, base_width=6, base_height=8, bg="white", dpi=300)
 ```
