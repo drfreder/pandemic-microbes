@@ -96,10 +96,15 @@ df.2021 <- read.csv("Data/biorxiv_2021_data.csv")
 df.full <- rbind(df.2018, df.2019, df.2020, df.2021[,-12])
 df.full <- df.full[!duplicated(df.full),] #Remove duplicates
 
+#Set search terms
+covid <- 'SARS-CoV-2|COVID|coronavirus|2019-nCov'
+microbiome <- 'microbiome|microbial community|microbial communities'
+microbes <- 'microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi' #All microbial search terms together 
+
 #Search abstracts for terms
-df.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.full$abstract, ignore.case=TRUE)
-df.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.full$abstract, ignore.case=TRUE)
-df.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.full$abstract, ignore.case=TRUE) #All microbial search terms together 
+df.full$COVID.in.abstract <- grepl(covid, df.full$abstract, ignore.case=TRUE)
+df.full$microbiome.in.abstract <- grepl(microbiome, df.full$abstract, ignore.case=TRUE)
+df.full$microbe.in.abstract <- grepl(microbes, df.full$abstract, ignore.case=TRUE) 
 ```
 
 There are 146155 bioRxiv preprints in the dataset, which spans Jan. 1,
@@ -245,9 +250,9 @@ df.med.2021 <- read.csv("Data/medrxiv_2021_data.csv")
 df.med.full <- rbind(df.med.2019, df.med.2020, df.med.2021[, -11])
 df.med.full <- df.med.full[!duplicated(df.med.full),] #Remove duplicates
 
-df.med.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.med.full$abstract, ignore.case=TRUE)
-df.med.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.med.full$abstract, ignore.case=TRUE)
-df.med.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.med.full$abstract, ignore.case=TRUE)
+df.med.full$COVID.in.abstract <- grepl(covid, df.med.full$abstract, ignore.case=TRUE)
+df.med.full$microbiome.in.abstract <- grepl(microbiome, df.med.full$abstract, ignore.case=TRUE)
+df.med.full$microbe.in.abstract <- grepl(microbes, df.med.full$abstract, ignore.case=TRUE)
 ```
 
 There are 27601 medRxiv preprints in the dataset, which spans Jan. 1,
@@ -305,9 +310,9 @@ nih.2021 <- rbind(read_csv("Data/NIH_2021_part1.csv"), read_csv("Data/NIH_2021_p
 df.nih.full <- rbind(nih.2018, nih.2019, nih.2020, nih.2021)
   
 #Search for COVID-19, microbiome, and other microbe search terms
-df.nih.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.nih.full$`Project Abstract`, ignore.case=TRUE)
-df.nih.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.nih.full$`Project Abstract`, ignore.case=TRUE)
-df.nih.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$COVID.in.abstract <- grepl(covid, df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$microbiome.in.abstract <- grepl(microbiome, df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$microbe.in.abstract <- grepl(microbes, df.nih.full$`Project Abstract`, ignore.case=TRUE)
 ```
 
 There are 199854 NIH Research Project grants in the dataset, which spans
@@ -346,11 +351,6 @@ kable(df.nih.full %>% group_by(`NIH.covid`, COVID.in.abstract) %>% summarize (n=
 | FALSE     | TRUE              |    492 |
 | TRUE      | FALSE             |    400 |
 | TRUE      | TRUE              |    915 |
-
-``` r
-#kable(df.nih.full %>% group_by(`NIH.covid`, COVID.in.abstract, year) %>% summarize(n=n()))
-#kable(df.nih.full %>% group_by(`NIH.covid`, microbiome.in.abstract) %>% summarize (n=n()))
-```
 
 The earliest date of a grant through the NIH COVID-19 response is
 2020-02-05, so some grants funded for research on coronaviruses (e.g.,

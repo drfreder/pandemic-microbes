@@ -87,10 +87,15 @@ df.2021 <- read.csv("Data/biorxiv_2021_data.csv")
 df.full <- rbind(df.2018, df.2019, df.2020, df.2021[,-12])
 df.full <- df.full[!duplicated(df.full),] #Remove duplicates
 
+#Set search terms
+covid <- 'SARS-CoV-2|COVID|coronavirus|2019-nCov'
+microbiome <- 'microbiome|microbial community|microbial communities'
+microbes <- 'microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi' #All microbial search terms together 
+
 #Search abstracts for terms
-df.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.full$abstract, ignore.case=TRUE)
-df.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.full$abstract, ignore.case=TRUE)
-df.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.full$abstract, ignore.case=TRUE) #All microbial search terms together 
+df.full$COVID.in.abstract <- grepl(covid, df.full$abstract, ignore.case=TRUE)
+df.full$microbiome.in.abstract <- grepl(microbiome, df.full$abstract, ignore.case=TRUE)
+df.full$microbe.in.abstract <- grepl(microbes, df.full$abstract, ignore.case=TRUE) 
 ```
 
 There are `r length(df.full$COVID.in.abstract)` bioRxiv preprints in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.full$COVID.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.full$microbe.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`, and `r sum(df.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.full$microbiome.in.abstract)/length(df.full$COVID.in.abstract), 2), "%")`
@@ -199,9 +204,9 @@ df.med.2021 <- read.csv("Data/medrxiv_2021_data.csv")
 df.med.full <- rbind(df.med.2019, df.med.2020, df.med.2021[, -11])
 df.med.full <- df.med.full[!duplicated(df.med.full),] #Remove duplicates
 
-df.med.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.med.full$abstract, ignore.case=TRUE)
-df.med.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.med.full$abstract, ignore.case=TRUE)
-df.med.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.med.full$abstract, ignore.case=TRUE)
+df.med.full$COVID.in.abstract <- grepl(covid, df.med.full$abstract, ignore.case=TRUE)
+df.med.full$microbiome.in.abstract <- grepl(microbiome, df.med.full$abstract, ignore.case=TRUE)
+df.med.full$microbe.in.abstract <- grepl(microbes, df.med.full$abstract, ignore.case=TRUE)
 ```
 
 There are `r length(df.med.full$COVID.in.abstract)` medRxiv preprints in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.med.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.med.full$COVID.in.abstract)/length(df.med.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.med.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.med.full$microbe.in.abstract)/length(df.med.full$COVID.in.abstract), 2), "%")`, and `r sum(df.med.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.med.full$microbiome.in.abstract)/length(df.med.full$COVID.in.abstract), 2), "%")`
@@ -247,9 +252,9 @@ nih.2021 <- rbind(read_csv("Data/NIH_2021_part1.csv"), read_csv("Data/NIH_2021_p
 df.nih.full <- rbind(nih.2018, nih.2019, nih.2020, nih.2021)
   
 #Search for COVID-19, microbiome, and other microbe search terms
-df.nih.full$COVID.in.abstract <- grepl('SARS-CoV-2|COVID|coronavirus|2019-nCov', df.nih.full$`Project Abstract`, ignore.case=TRUE)
-df.nih.full$microbiome.in.abstract <- grepl('microbiome|microbial community|microbial communities', df.nih.full$`Project Abstract`, ignore.case=TRUE)
-df.nih.full$microbe.in.abstract <- grepl('microbe|bacteria|bacterium|virus|archaea|SARS-CoV-2|COVID|coronavirus|microbiome|microbial community|fungus|fungi', df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$COVID.in.abstract <- grepl(covid, df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$microbiome.in.abstract <- grepl(microbiome, df.nih.full$`Project Abstract`, ignore.case=TRUE)
+df.nih.full$microbe.in.abstract <- grepl(microbes, df.nih.full$`Project Abstract`, ignore.case=TRUE)
 ```
 
 There are `r length(df.nih.full$COVID.in.abstract)` NIH Research Project grants in the dataset, which spans Jan. 1, 2018 to Jun. 15, 2021. Of these, `r sum(df.nih.full$COVID.in.abstract)` mention SARS-CoV-2, COVID-19, or coronavirus in the abstract, or `r paste0(round(100*sum(df.nih.full$COVID.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`. In contrast, `r sum(df.nih.full$microbe.in.abstract)` mention any microbe, including bacteria, fungi, archaea, and viruses, or `r paste0(round(100*sum(df.nih.full$microbe.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`, and `r sum(df.nih.full$microbiome.in.abstract)` mention the microbiome or microbial communities, or `r paste0(round(100*sum(df.nih.full$microbiome.in.abstract)/length(df.nih.full$COVID.in.abstract), 2), "%")`.
@@ -267,8 +272,6 @@ df.nih.full$year <- cut(as.POSIXct(df.nih.full$date), "year")
 #Check correspondence between COVID-19 search terms and NIH COVID-19 Response database category
 df.nih.full$NIH.covid <- ifelse(!is.na(df.nih.full$`NIH COVID-19 Response`), TRUE, FALSE)
 kable(df.nih.full %>% group_by(`NIH.covid`, COVID.in.abstract) %>% summarize (n=n()))
-#kable(df.nih.full %>% group_by(`NIH.covid`, COVID.in.abstract, year) %>% summarize(n=n()))
-#kable(df.nih.full %>% group_by(`NIH.covid`, microbiome.in.abstract) %>% summarize (n=n()))
 ```
 
 The earliest date of a grant through the NIH COVID-19 response is `r min(df.nih.full[df.nih.full$NIH.covid == TRUE, "date"][[1]])`, so some grants funded for research on coronaviruses (e.g., on SARS or MERS) are captured in our analysis, but are not part of the NIH COVID-19 response. Similarly, not all grant abstracts that mention COVID-19 are considered part of the NIH COVID-19 response. 
