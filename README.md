@@ -1,7 +1,7 @@
 The COVID-19 pandemic and microbial science
 ================
 Megan Frederickson and Aspen Reese
-28/06/2021
+08/20/2021
 
 This GitHub repo contains the code for all analyses in:
 
@@ -206,14 +206,6 @@ sum.by.category.other.microbe$type <- "Other microbe"
 sum.by.category.other.microbe$percent <- sum.by.category.other.microbe$n/sum(sum.by.category.other.microbe$n)*100
 sum.by.category <- rbind(sum.by.category.covid, sum.by.category.microbiome, sum.by.category.other.microbe)
 sum.by.category$category2 <- ifelse(sum.by.category$percent > 6 | sum.by.category$category == "ecology" | sum.by.category$category == "evolutionary biology", sum.by.category$category, "other")
-unique(sum.by.category$category2)
-```
-
-    ## [1] "other"                "biochemistry"         "bioinformatics"      
-    ## [4] "ecology"              "evolutionary biology" "genomics"            
-    ## [7] "immunology"           "microbiology"
-
-``` r
 sum.by.category$category2 <- ordered(sum.by.category$category2, levels=c("ecology", "evolutionary biology", "biochemistry", "bioinformatics", "biophysics", "genomics", "immunology", "microbiology", "molecular biology", "other"))
 
 p4 <- ggplot(data=sum.by.category, aes(x=type, y=n, fill=category2))+geom_bar(position="fill", stat="identity")+theme_cowplot()+ylab("Preprints (prop.)")+xlab("Topic")+scale_fill_manual(values=c(park_palette("SmokyMountains")[[2]], park_palette("SmokyMountains")[[4]], "#d9d9d9", "#bdbdbd", "#969696", "#737373", "#525252", "#252525"))+theme(legend.title=element_blank())+scale_x_discrete(labels = wrap_format(20))
@@ -323,17 +315,17 @@ Jan. 1, 2018 to Jun. 15, 2021. Of these, 1407 mention SARS-CoV-2,
 COVID-19, or coronavirus in the abstract, or 0.7%. In contrast, 30282
 mention any microbe, including bacteria, fungi, archaea, and viruses, or
 15.15%, and 3849 mention the microbiome or microbial communities, or
-1.93%
+1.93%.
 
 The NIH dataset has a field for NIH COVID-19 Response, which according
 to the website “returns projects awarded to study COVID-19 and related
-topics, as funder under: RegCV - NIH regular appropriations funding, CV
-- Coronavirus Preparedness and Response Supplemental Appropriations Act,
-2020, C3 - CARES Act (Coronavirus Aid, Relief, and Economic Security
-Act), C4 - Paycheck Protection Program and Health Care Enhancement Act,
-C5 - Coronavirus Response and Relief Supplemental Appropriations Act,
-2021.” We checked the correspondence between the COVID-19 search terms
-we used and the NIH COVID-19 Response field.
+topics, as funder under: RegCV NIH regular appropriations funding, CV
+Coronavirus Preparedness and Response Supplemental Appropriations Act,
+2020, C3 CARES Act (Coronavirus Aid, Relief, and Economic Security Act),
+C4 Paycheck Protection Program and Health Care Enhancement Act, C5
+Coronavirus Response and Relief Supplemental Appropriations Act, 2021.”
+We checked the correspondence between the COVID-19 search terms we used
+and the NIH COVID-19 Response field.
 
 ``` r
 #Adjust date fields
@@ -381,7 +373,7 @@ p7 <- ggplot(data=subset(sum.by.month.long, type=="n.preprints"))+geom_line(aes(
 p7
 ```
 
-![](README_files/figure-gfm/nih%20total%20grants%20figure-1.png)<!-- -->
+![](README_files/figure-gfm/NIH%20total%20grants%20figure-1.png)<!-- -->
 
 How many NIH research project grants are there on COVID-19, SARS-CoV-2,
 or coronaviruses, compared to other microbial science topics?
