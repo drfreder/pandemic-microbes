@@ -173,7 +173,7 @@ p3
 ![](README_files/figure-gfm/bioRxiv%20sub-discipline%20figure-1.png)<!-- -->
 
 ``` r
-save_plot("figureS1.tiff", p3, base_width=10, base_height=8, bg = "white", dpi=300)
+save_plot("figureS1.pdf", p3, base_width=10, base_height=8, dpi=300)
 ```
 
 This figure excludes sub-disciplines with fewer than 25 preprints on
@@ -200,13 +200,14 @@ We also want to visualize the data on sub-fields in a more concise form
 for the main text.
 
 ``` r
-sum.by.category.covid <- subset(df.full, COVID.in.abstract) %>% group_by(category) %>% summarize(n=n())
+df.full$month <- as.Date(df.full$month)
+sum.by.category.covid <- subset(df.full, COVID.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.covid$type <- "COVID-19, SARS-CoV-2, or coronavirus"
 sum.by.category.covid$percent <- sum.by.category.covid$n/sum(sum.by.category.covid$n)*100
-sum.by.category.microbiome <- subset(df.full, microbiome.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.microbiome <- subset(df.full, microbiome.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.microbiome$type <- "Microbiome or microbial community"
 sum.by.category.microbiome$percent <- sum.by.category.microbiome$n/sum(sum.by.category.microbiome$n)*100
-sum.by.category.other.microbe <- subset(df.full, !COVID.in.abstract & !microbiome.in.abstract & microbe.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.other.microbe <- subset(df.full, !COVID.in.abstract & !microbiome.in.abstract & microbe.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.other.microbe$type <- "Other microbe"
 sum.by.category.other.microbe$percent <- sum.by.category.other.microbe$n/sum(sum.by.category.other.microbe$n)*100
 sum.by.category <- rbind(sum.by.category.covid, sum.by.category.microbiome, sum.by.category.other.microbe)
@@ -224,7 +225,7 @@ save_plot("figure2.tiff", p4, base_width=8, base_height=6, bg="white", dpi=300)
 ```
 
 Ecology and evolutionary biology account for just 3.6% of preprints on
-COVID-19, SARS-CoV-2, or coronaviruses, compared to 15.6% of preprints
+COVID-19, SARS-CoV-2, or coronaviruses, compared to 15.5% of preprints
 on microbiomes and microbial communities and 10.8% of preprints on other
 microbes.
 

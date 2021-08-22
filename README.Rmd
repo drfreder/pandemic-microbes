@@ -150,7 +150,7 @@ sum.by.month.long$category <- gsub("pharmacology and toxicology", "pharmacology 
 p3 <- ggplot(data=subset(sum.by.month.long, type != "n.microbe.preprints" & type != "n.preprints"), aes(fill=type, y=number, x=month)) + geom_bar(position="stack", stat="identity")+scale_fill_manual(values=rev(park_palette("Badlands", 3)), labels = c("COVID-19, SARS-CoV-2, or coronavirus", "Microbiome or microbial community", "Other microbe"))+ylab("Preprints (no.)")+xlab("Month")+ggtitle("bioRxiv preprints")+facet_wrap(~category, scales = 'free')+theme_cowplot()+theme(axis.text.x = element_text(angle = 15), legend.position = c(0.419, 0.16), panel.grid = element_blank(), legend.justification='left', legend.title=element_blank(), strip.text = element_text(size=9), axis.text=element_text(size=9))+guides(fill = guide_legend(nrow = 3))+scale_x_date(limits=c(as.Date("2017-12-15"),as.Date("2021-06-15")), date_labels="%m-%Y")+geom_vline(xintercept=as.Date("2020-03-11"), linetype="dotted")
 p3
 
-save_plot("figureS1.tiff", p3, base_width=10, base_height=8, bg = "white", dpi=300)
+save_plot("figureS1.pdf", p3, base_width=10, base_height=8, dpi=300)
 ```
 
 This figure excludes sub-disciplines with fewer than 25 preprints on SARS-CoV-2, COVID-19, or coronaviruses, specifically:
@@ -162,13 +162,14 @@ Note that the reason that epidemiology and clinical trials have few COVID-19 pap
 We also want to visualize the data on sub-fields in a more concise form for the main text. 
 
 ```{r bioRxiv sub-discipline stacked bar graph figure, fig.width=8, fig.height=8, dpi=300}
-sum.by.category.covid <- subset(df.full, COVID.in.abstract) %>% group_by(category) %>% summarize(n=n())
+df.full$month <- as.Date(df.full$month)
+sum.by.category.covid <- subset(df.full, COVID.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.covid$type <- "COVID-19, SARS-CoV-2, or coronavirus"
 sum.by.category.covid$percent <- sum.by.category.covid$n/sum(sum.by.category.covid$n)*100
-sum.by.category.microbiome <- subset(df.full, microbiome.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.microbiome <- subset(df.full, microbiome.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.microbiome$type <- "Microbiome or microbial community"
 sum.by.category.microbiome$percent <- sum.by.category.microbiome$n/sum(sum.by.category.microbiome$n)*100
-sum.by.category.other.microbe <- subset(df.full, !COVID.in.abstract & !microbiome.in.abstract & microbe.in.abstract) %>% group_by(category) %>% summarize(n=n())
+sum.by.category.other.microbe <- subset(df.full, !COVID.in.abstract & !microbiome.in.abstract & microbe.in.abstract & month < "2021-06-01") %>% group_by(category) %>% summarize(n=n())
 sum.by.category.other.microbe$type <- "Other microbe"
 sum.by.category.other.microbe$percent <- sum.by.category.other.microbe$n/sum(sum.by.category.other.microbe$n)*100
 sum.by.category <- rbind(sum.by.category.covid, sum.by.category.microbiome, sum.by.category.other.microbe)
