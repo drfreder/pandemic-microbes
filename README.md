@@ -223,6 +223,11 @@ p4
 save_plot("figure2.tiff", p4, base_width=8, base_height=6, bg="white", dpi=300)
 ```
 
+Ecology and evolutionary biology account for just 3.6% of preprints on
+COVID-19, SARS-CoV-2, or coronaviruses, compared to 15.6% of preprints
+on microbiomes and microbial communities and 10.8% of preprints on other
+microbes.
+
 ## medRxiv preprints
 
 We also scraped submission data from medRxiv, for the same dates
